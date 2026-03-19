@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UQ-Module | Explainable TSR</title>
+    <!-- Use Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+    <div class="glass-container">
+        <header>
+            <h1>UQ-Module: Explainable Vision</h1>
+            <p>Traffic Sign Recognition with Uncertainty Quantification</p>
+        </header>
+
+        <section class="upload-section">
+            <form id="upload-form">
+                <input type="file" id="video-file" accept="video/*" required />
+                <button type="submit" id="submit-btn">
+                    <span>Process Video</span>
+                    <div id="loader" class="spinner hidden"></div>
+                </button>
+            </form>
+        </section>
+
+        <!-- Using Grid Layout to structure 4 sections -->
+        <section id="results-grid" class="grid-container hidden">
+            <div class="grid-card left-col">
+                <div class="card-header">
+                    <h2>Original Input</h2>
+                    <span class="badge gray">Raw Feed</span>
+                </div>
+                <div class="video-wrapper">
+                    <!-- Images will receive MJPEG stream from the FastAPI backend -->
+                    <img id="vid-original" alt="Awaiting video stream..."/>
+                </div>
+                <div class="card-footer">
+                    <p>Unprocessed raw camera input.</p>
+                </div>
+            </div>
+            
+            <div class="grid-card top-right">
+                <div class="card-header">
+                    <h2>Model Detection</h2>
+                    <span class="badge blue">ResNet50 + YOLO</span>
+                </div>
+                <div class="video-wrapper">
+                    <img id="vid-detection" alt="Awaiting video stream..."/>
+                </div>
+                <div class="card-footer">
+                    <p>Bounding boxes with class confidence scores.</p>
+                </div>
+            </div>
+
+            <div class="bottom-group">
+                <div class="grid-card">
+                    <div class="card-header">
+                        <h2>Uncertainty Map</h2>
+                        <span class="badge orange">MC Dropout</span>
+                    </div>
+                    <div class="video-wrapper">
+                        <img id="vid-uncertainty" alt="Awaiting video stream..."/>
+                    </div>
+                </div>
+
+                <div class="grid-card">
+                    <div class="card-header">
+                        <h2>Explainability</h2>
+                        <span class="badge red">Grad-CAM</span>
+                    </div>
+                    <div class="video-wrapper">
+                        <img id="vid-explain" alt="Awaiting video stream..."/>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <script src="/static/js/main.js"></script>
+</body>
+</html>
