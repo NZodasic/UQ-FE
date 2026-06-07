@@ -6,7 +6,7 @@
     <title>UQ-Module | Explainable TSR</title>
     <!-- Use Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="/static/css/style.css">
+    <link rel="stylesheet" href="/static/css/style.css?v=20260607-4">
 </head>
 <body>
     <div class="glass-container">
@@ -25,7 +25,18 @@
             </form>
         </section>
 
-        <!-- Using Grid Layout to structure 4 sections -->
+        <section class="model-section">
+            <div class="model-controls">
+                <label for="model-select">Model</label>
+                <select id="model-select"></select>
+                <button type="button" id="show-models-btn">Show All</button>
+            </div>
+            <div id="model-status" class="model-status">Loading trained models...</div>
+            <div id="active-model-summary" class="active-model-summary"></div>
+            <div id="models-panel" class="models-panel hidden"></div>
+        </section>
+
+        <!-- Results are stacked so the original feed and model analysis each have room to breathe. -->
         <section id="results-grid" class="grid-container hidden">
             <div class="grid-card left-col">
                 <div class="card-header">
@@ -40,17 +51,36 @@
                     <p>Unprocessed raw camera input.</p>
                 </div>
             </div>
+
+            <div class="section-heading">
+                <h2>Model Analysis</h2>
+                <p>Detection, uncertainty, and explainability for the selected model.</p>
+            </div>
             
             <div class="grid-card top-right">
                 <div class="card-header">
                     <h2>Model Detection</h2>
-                    <span class="badge blue">ResNet50 + YOLO</span>
+                    <span id="detection-badge" class="badge blue">Model</span>
                 </div>
                 <div class="video-wrapper">
                     <img id="vid-detection" alt="Awaiting video stream..."/>
                 </div>
+                <div id="detection-info" class="detection-info">
+                    <div class="info-chip">
+                        <span>Predicted Class</span>
+                        <strong id="detected-model-info">Awaiting video</strong>
+                    </div>
+                    <div class="info-chip">
+                        <span>UQ</span>
+                        <strong id="uq-model-info">-</strong>
+                    </div>
+                    <div class="info-chip">
+                        <span>XAI</span>
+                        <strong id="xai-model-info">-</strong>
+                    </div>
+                </div>
                 <div class="card-footer">
-                    <p>Bounding boxes with class confidence scores.</p>
+                    <p>Classifier prediction with confidence score.</p>
                 </div>
             </div>
 
@@ -58,26 +88,62 @@
                 <div class="grid-card">
                     <div class="card-header">
                         <h2>Uncertainty Map</h2>
-                        <span class="badge orange">MC Dropout</span>
+                        <span id="uq-badge" class="badge orange">MC Dropout</span>
                     </div>
                     <div class="video-wrapper">
                         <img id="vid-uncertainty" alt="Awaiting video stream..."/>
+                    </div>
+                    <div class="metric-panel">
+                        <div class="metric-tile">
+                            <span>Predictive Entropy</span>
+                            <strong id="uq-entropy">-</strong>
+                        </div>
+                        <div class="metric-tile">
+                            <span>Max Variance</span>
+                            <strong id="uq-max-variance">-</strong>
+                        </div>
+                        <div class="metric-tile">
+                            <span>Mean Variance</span>
+                            <strong id="uq-mean-variance">-</strong>
+                        </div>
+                        <div class="metric-tile">
+                            <span>Top Probability</span>
+                            <strong id="uq-top-probability">-</strong>
+                        </div>
                     </div>
                 </div>
 
                 <div class="grid-card">
                     <div class="card-header">
                         <h2>Explainability</h2>
-                        <span class="badge red">Grad-CAM</span>
+                        <span id="xai-badge" class="badge red">Grad-CAM</span>
                     </div>
                     <div class="video-wrapper">
                         <img id="vid-explain" alt="Awaiting video stream..."/>
+                    </div>
+                    <div class="metric-panel">
+                        <div class="metric-tile">
+                            <span>Peak Saliency</span>
+                            <strong id="xai-peak-saliency">-</strong>
+                        </div>
+                        <div class="metric-tile">
+                            <span>Mean Saliency</span>
+                            <strong id="xai-mean-saliency">-</strong>
+                        </div>
+                        <div class="metric-tile">
+                            <span>Active Area</span>
+                            <strong id="xai-active-area">-</strong>
+                        </div>
+                        <div class="metric-tile">
+                            <span>Strong Area</span>
+                            <strong id="xai-strong-area">-</strong>
+                        </div>
                     </div>
                 </div>
             </div>
         </section>
     </div>
 
-    <script src="/static/js/main.js"></script>
+    <script src="/static/js/main.js?v=20260607-4"></script>
 </body>
 </html>
