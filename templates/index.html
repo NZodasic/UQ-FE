@@ -3,147 +3,296 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>UQ-Module | Explainable TSR</title>
-    <!-- Use Google Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="/static/css/style.css?v=20260607-4">
+    <title>UQ-Module | Explainable TSR Diagnostic Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/css/style.css?v=20260618-4">
 </head>
 <body>
-    <div class="glass-container">
-        <header>
-            <h1>UQ-Module: Explainable Vision</h1>
-            <p>Traffic Sign Recognition with Uncertainty Quantification</p>
-        </header>
-
-        <section class="upload-section">
-            <form id="upload-form">
-                <input type="file" id="video-file" accept="video/*" required />
-                <button type="submit" id="submit-btn">
-                    <span>Process Video</span>
-                    <div id="loader" class="spinner hidden"></div>
-                </button>
-            </form>
-        </section>
-
-        <section class="model-section">
-            <div class="model-controls">
-                <label for="model-select">Model</label>
-                <select id="model-select"></select>
-                <button type="button" id="show-models-btn">Show All</button>
+    <div class="dashboard-wrapper">
+        <!-- Sidebar Controls -->
+        <aside class="sidebar animate-fade-in-left">
+            <div class="sidebar-header">
+                <div class="logo-area">
+                    <svg class="logo-icon" viewBox="0 0 24 24" width="28" height="28" stroke="currentColor" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M12 2L2 7l10 5 10-5-10-5z"></path>
+                        <path d="M2 17l10 5 10-5"></path>
+                        <path d="M2 12l10 5 10-5"></path>
+                    </svg>
+                    <div class="brand">
+                        <h1>UQ-XAI Vision</h1>
+                        <span>Traffic Sign Diagnostics</span>
+                    </div>
+                </div>
             </div>
-            <div id="model-status" class="model-status">Loading trained models...</div>
-            <div id="active-model-summary" class="active-model-summary"></div>
+
+            <!-- Upload Section -->
+            <div class="sidebar-widget">
+                <h3>Video Source</h3>
+                <form id="upload-form" class="upload-form">
+                    <div class="drop-zone" id="drop-zone">
+                        <svg class="drop-icon" viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                            <polyline points="17 8 12 3 7 8"></polyline>
+                            <line x1="12" y1="3" x2="12" y2="15"></line>
+                        </svg>
+                        <span class="drop-text">Choose file or drag here</span>
+                        <input type="file" id="video-file" accept="video/*" required />
+                    </div>
+                    <button type="submit" id="submit-btn" class="btn btn-primary">
+                        <span>Process Video</span>
+                        <div id="loader" class="spinner hidden"></div>
+                    </button>
+                </form>
+            </div>
+
+            <!-- Model Selection -->
+            <div class="sidebar-widget">
+                <h3>Model</h3>
+                <div class="control-group">
+                    <label for="model-select">Checkpoint Run</label>
+                    <div class="select-wrapper">
+                        <select id="model-select"></select>
+                    </div>
+                </div>
+                <div class="model-quick-stats">
+                    <span id="model-count-chip">0 runs</span>
+                    <span id="model-calibration-chip">Calibration: -</span>
+                </div>
+                <div class="btn-group">
+                    <button type="button" id="show-models-btn" class="btn btn-secondary btn-sm">Compare Runs</button>
+                </div>
+                <div id="model-status" class="model-status" data-state="neutral">Loading checkpoints...</div>
+            </div>
+
+            <!-- UQ Override Settings -->
+            <div class="sidebar-widget">
+                <h3>UQ</h3>
+                <div class="control-group">
+                    <label for="uq-method-select">UQ Method</label>
+                    <div class="select-wrapper">
+                        <select id="uq-method-select"></select>
+                    </div>
+                </div>
+                <div class="control-group" id="uq-samples-group">
+                    <div class="slider-meta">
+                        <label for="uq-samples-slider" id="uq-samples-label">Samples</label>
+                        <span id="uq-samples-val">15</span>
+                    </div>
+                    <input type="range" id="uq-samples-slider" min="2" max="50" step="1" value="15" />
+                </div>
+            </div>
+
+            <!-- XAI Override Settings -->
+            <div class="sidebar-widget">
+                <h3>XAI</h3>
+                <div class="control-group">
+                    <label for="xai-method-select">XAI Method</label>
+                    <div class="select-wrapper">
+                        <select id="xai-method-select"></select>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Active Model Summary -->
+            <div class="sidebar-widget active-model-container">
+                <h3>Run Metrics</h3>
+                <div id="active-model-summary" class="active-model-summary"></div>
+            </div>
+        </aside>
+
+        <!-- Main Display Panel -->
+        <main class="main-content">
+            <!-- Details Models overlay panel -->
             <div id="models-panel" class="models-panel hidden"></div>
-        </section>
 
-        <!-- Results are stacked so the original feed and model analysis each have room to breathe. -->
-        <section id="results-grid" class="grid-container hidden">
-            <div class="grid-card left-col">
-                <div class="card-header">
-                    <h2>Original Input</h2>
-                    <span class="badge gray">Raw Feed</span>
+            <div class="dashboard-header animate-fade-in">
+                <div class="dashboard-title">
+                    <h2>Traffic Sign Recognition Workbench</h2>
+                    <p>Vietnamese traffic-sign recognition diagnostics.</p>
                 </div>
-                <div class="video-wrapper">
-                    <!-- Images will receive MJPEG stream from the FastAPI backend -->
-                    <img id="vid-original" alt="Awaiting video stream..."/>
-                </div>
-                <div class="card-footer">
-                    <p>Unprocessed raw camera input.</p>
+                <div class="header-stats">
+                    <div>
+                        <span>Active Model</span>
+                        <strong id="header-model-name">-</strong>
+                    </div>
+                    <div>
+                        <span>Mode</span>
+                        <strong id="header-analysis-mode">UQ + XAI</strong>
+                    </div>
                 </div>
             </div>
 
-            <div class="section-heading">
-                <h2>Model Analysis</h2>
-                <p>Detection, uncertainty, and explainability for the selected model.</p>
-            </div>
-            
-            <div class="grid-card top-right">
-                <div class="card-header">
-                    <h2>Model Detection</h2>
-                    <span id="detection-badge" class="badge blue">Model</span>
-                </div>
-                <div class="video-wrapper">
-                    <img id="vid-detection" alt="Awaiting video stream..."/>
-                </div>
-                <div id="detection-info" class="detection-info">
-                    <div class="info-chip">
-                        <span>Predicted Class</span>
-                        <strong id="detected-model-info">Awaiting video</strong>
+            <section id="results-grid" class="grid-container">
+                <!-- Row 1: Original Feed & Model Prediction -->
+                <div class="grid-row">
+                    <!-- Original Input -->
+                    <div class="grid-card border-gray">
+                        <div class="card-header">
+                            <div class="card-title-area">
+                                <span class="pulse-indicator pulse-green"></span>
+                                <h2>Original Input</h2>
+                            </div>
+                            <span class="badge gray">Raw Feed</span>
+                        </div>
+                        <div class="video-wrapper" data-placeholder="No video loaded">
+                            <img id="vid-original" alt="Awaiting video stream..."/>
+                        </div>
+                        <div class="card-footer">
+                            <p>Unprocessed raw camera input.</p>
+                        </div>
                     </div>
-                    <div class="info-chip">
-                        <span>UQ</span>
-                        <strong id="uq-model-info">-</strong>
-                    </div>
-                    <div class="info-chip">
-                        <span>XAI</span>
-                        <strong id="xai-model-info">-</strong>
-                    </div>
-                </div>
-                <div class="card-footer">
-                    <p>Classifier prediction with confidence score.</p>
-                </div>
-            </div>
 
-            <div class="bottom-group">
-                <div class="grid-card">
-                    <div class="card-header">
-                        <h2>Uncertainty Map</h2>
-                        <span id="uq-badge" class="badge orange">MC Dropout</span>
-                    </div>
-                    <div class="video-wrapper">
-                        <img id="vid-uncertainty" alt="Awaiting video stream..."/>
-                    </div>
-                    <div class="metric-panel">
-                        <div class="metric-tile">
-                            <span>Predictive Entropy</span>
-                            <strong id="uq-entropy">-</strong>
+                    <!-- Model Detection -->
+                    <div class="grid-card border-blue">
+                        <div class="card-header">
+                            <div class="card-title-area">
+                                <span class="pulse-indicator pulse-blue"></span>
+                                <h2>Model Inference</h2>
+                            </div>
+                            <span id="detection-badge" class="badge blue">Model</span>
                         </div>
-                        <div class="metric-tile">
-                            <span>Max Variance</span>
-                            <strong id="uq-max-variance">-</strong>
+                        <div class="video-wrapper" data-placeholder="No video loaded">
+                            <img id="vid-detection" alt="Awaiting video stream..."/>
                         </div>
-                        <div class="metric-tile">
-                            <span>Mean Variance</span>
-                            <strong id="uq-mean-variance">-</strong>
+                        <div id="detection-info" class="detection-info">
+                            <div class="info-chip">
+                                <span>Prediction Class</span>
+                                <strong id="detected-model-info">Awaiting video</strong>
+                                <div class="progress-bar-container mini mt-1 hidden" id="confidence-bar-wrapper">
+                                    <div id="confidence-bar" class="progress-bar blue" style="width: 0%"></div>
+                                </div>
+                            </div>
+                            <div class="info-chip">
+                                <span>Active UQ</span>
+                                <strong id="uq-model-info">-</strong>
+                            </div>
+                            <div class="info-chip">
+                                <span>Active XAI</span>
+                                <strong id="xai-model-info">-</strong>
+                            </div>
                         </div>
-                        <div class="metric-tile">
-                            <span>Top Probability</span>
-                            <strong id="uq-top-probability">-</strong>
+                        <div class="card-footer">
+                            <p>Classifier prediction with confidence level.</p>
                         </div>
                     </div>
                 </div>
 
-                <div class="grid-card">
-                    <div class="card-header">
-                        <h2>Explainability</h2>
-                        <span id="xai-badge" class="badge red">Grad-CAM</span>
+                <!-- Section Title -->
+                <div class="section-divider">
+                    <h2>Diagnostic Analysis</h2>
+                    <p>Predictive uncertainty metrics and visual explanation heatmaps</p>
+                </div>
+
+                <!-- Row 2: UQ Heatmap & XAI Heatmap -->
+                <div class="grid-row">
+                    <!-- Uncertainty Map -->
+                    <div class="grid-card border-orange">
+                        <div class="card-header">
+                            <div class="card-title-area">
+                                <span class="pulse-indicator pulse-orange"></span>
+                                <h2>Uncertainty Map</h2>
+                            </div>
+                            <span id="uq-badge" class="badge orange">MC Dropout</span>
+                        </div>
+                        <div class="video-wrapper" data-placeholder="No video loaded">
+                            <img id="vid-uncertainty" alt="Awaiting video stream..."/>
+                        </div>
+                        <div class="metric-panel">
+                            <div class="metric-tile">
+                                <div class="tile-meta">
+                                    <span>Predictive Entropy</span>
+                                    <strong id="uq-entropy">-</strong>
+                                </div>
+                                <div class="progress-bar-container">
+                                    <div id="uq-entropy-bar" class="progress-bar orange" style="width: 0%"></div>
+                                </div>
+                            </div>
+                            <div class="metric-tile">
+                                <div class="tile-meta">
+                                    <span>Max Variance</span>
+                                    <strong id="uq-max-variance">-</strong>
+                                </div>
+                                <div class="progress-bar-container">
+                                    <div id="uq-max-variance-bar" class="progress-bar orange" style="width: 0%"></div>
+                                </div>
+                            </div>
+                            <div class="metric-tile">
+                                <div class="tile-meta">
+                                    <span>Mean Variance</span>
+                                    <strong id="uq-mean-variance">-</strong>
+                                </div>
+                                <div class="progress-bar-container">
+                                    <div id="uq-mean-variance-bar" class="progress-bar orange" style="width: 0%"></div>
+                                </div>
+                            </div>
+                            <div class="metric-tile">
+                                <div class="tile-meta">
+                                    <span>Top Probability</span>
+                                    <strong id="uq-top-probability">-</strong>
+                                </div>
+                                <div class="progress-bar-container">
+                                    <div id="uq-top-probability-bar" class="progress-bar orange" style="width: 0%"></div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
-                    <div class="video-wrapper">
-                        <img id="vid-explain" alt="Awaiting video stream..."/>
-                    </div>
-                    <div class="metric-panel">
-                        <div class="metric-tile">
-                            <span>Peak Saliency</span>
-                            <strong id="xai-peak-saliency">-</strong>
+
+                    <!-- Explainability Map -->
+                    <div class="grid-card border-red">
+                        <div class="card-header">
+                            <div class="card-title-area">
+                                <span class="pulse-indicator pulse-red"></span>
+                                <h2>XAI Saliency</h2>
+                            </div>
+                            <span id="xai-badge" class="badge red">Grad-CAM</span>
                         </div>
-                        <div class="metric-tile">
-                            <span>Mean Saliency</span>
-                            <strong id="xai-mean-saliency">-</strong>
+                        <div class="video-wrapper" data-placeholder="No video loaded">
+                            <img id="vid-explain" alt="Awaiting video stream..."/>
                         </div>
-                        <div class="metric-tile">
-                            <span>Active Area</span>
-                            <strong id="xai-active-area">-</strong>
-                        </div>
-                        <div class="metric-tile">
-                            <span>Strong Area</span>
-                            <strong id="xai-strong-area">-</strong>
+                        <div class="metric-panel">
+                            <div class="metric-tile">
+                                <div class="tile-meta">
+                                    <span>Peak Saliency</span>
+                                    <strong id="xai-peak-saliency">-</strong>
+                                </div>
+                                <div class="progress-bar-container">
+                                    <div id="xai-peak-saliency-bar" class="progress-bar red" style="width: 0%"></div>
+                                </div>
+                            </div>
+                            <div class="metric-tile">
+                                <div class="tile-meta">
+                                    <span>Mean Saliency</span>
+                                    <strong id="xai-mean-saliency">-</strong>
+                                </div>
+                                <div class="progress-bar-container">
+                                    <div id="xai-mean-saliency-bar" class="progress-bar red" style="width: 0%"></div>
+                                </div>
+                            </div>
+                            <div class="metric-tile">
+                                <div class="tile-meta">
+                                    <span>Active Area</span>
+                                    <strong id="xai-active-area">-</strong>
+                                </div>
+                                <div class="progress-bar-container">
+                                    <div id="xai-active-area-bar" class="progress-bar red" style="width: 0%"></div>
+                                </div>
+                            </div>
+                            <div class="metric-tile">
+                                <div class="tile-meta">
+                                    <span>Strong Area</span>
+                                    <strong id="xai-strong-area">-</strong>
+                                </div>
+                                <div class="progress-bar-container">
+                                    <div id="xai-strong-area-bar" class="progress-bar red" style="width: 0%"></div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
-            </div>
-        </section>
+            </section>
+        </main>
     </div>
 
-    <script src="/static/js/main.js?v=20260607-4"></script>
+    <script src="/static/js/main.js?v=20260618-3"></script>
 </body>
 </html>
